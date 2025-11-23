@@ -1,13 +1,13 @@
 import streamlit as st
-
-import streamlit as st
+import json
 
 # --- Simple Password Gate ---
 st.set_page_config(page_title="Homeopathy Patient Records")
 
 APP_PASSWORD = st.secrets.get("app_password")
+firebase_key_json = json.loads(st.secrets["firebase_key"]) 
 
-st.sidebar.title("🔒 Secure Access")
+st.sidebar.title("Secure Access")
 
 if APP_PASSWORD:
     user_pass = st.sidebar.text_input("Enter App Password", type="password")
@@ -22,8 +22,9 @@ from firebase_admin import credentials, firestore
 
 # ---------- FIREBASE SETUP ----------
 if not firebase_admin._apps:
-    cred = credentials.Certificate("serviceAccountKey.json")  # your key file
+    cred = credentials.Certificate(firebase_key_json)
     firebase_admin.initialize_app(cred)
+
 db = firestore.client()
 patients_ref = db.collection("patients")
 
