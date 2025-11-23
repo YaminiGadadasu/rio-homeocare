@@ -20,8 +20,9 @@ clean_json = match.group(0)
 # Escape literal newlines inside the private key if necessary
 if "\\n" not in clean_json and "PRIVATE KEY" in clean_json:
     clean_json = clean_json.replace("\n", "\\n")
-    
+
 try:
+    st.code(raw_key[:200])
     firebase_key_json = json.loads(clean_json)
 except Exception as e:
     st.error(f"Error loading Firebase key: {e}")
