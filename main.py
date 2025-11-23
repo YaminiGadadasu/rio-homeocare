@@ -32,26 +32,33 @@ patients_ref = db.collection("patients")
 # ---------- APP UI ----------
 st.title("Homeopathy Patient Database")
 
-menu = st.sidebar.selectbox("Menu", ["Add / Update Patient", "View Patient Record", "Delete Patient"])
+menu = st.sidebar.radio(
+    "🏥 Main Menu",
+    ["➕ Add / Update Patient", "🔍 View Patient Record", "🗑️ Delete Patient"]
+)
+
 
 
 # ---------- ADD OR UPDATE PATIENT ----------
-if menu == "Add / Update Patient":
-    st.header("Add / Update Patient Record")
+if menu == "➕ Add / Update Patient":
+    st.header("➕ Add / Update Patient Record")
 
-    # --- Reset loaded data when first entering screen ---
-    if "loaded_data" in st.session_state and not st.session_state.get("retain_data", False):
-        st.session_state.loaded_data = None
+    import pandas as pd
 
     # --- Keep form state persistent across reruns ---
     if "loaded_data" not in st.session_state:
         st.session_state.loaded_data = None
+    if "retain_data" not in st.session_state:
+        st.session_state.retain_data = False
+
+    # Reset data if entering fresh
+    if not st.session_state.get("retain_data", False):
+        st.session_state.loaded_data = None
 
     # ---------------- Search Section ----------------
-    st.markdown("Search Existing Record")
+    st.markdown("#### 🔎 Search Existing Record")
     search_choice = st.radio("Search by:", ["Case Number", "Full Name"])
     search_value = st.text_input("Enter value")
-
     search_button = st.button("Load Existing Record")
 
     if search_button and search_value:
@@ -69,12 +76,14 @@ if menu == "Add / Update Patient":
             docs = list(patients_ref.where("name", "==", search_value).stream())
             if docs:
                 st.session_state.loaded_data = docs[0].to_dict()
+                st.session_state.retain_data = True
                 st.success(
                     f"Record found for patient: {st.session_state.loaded_data.get('name')} "
                     f"(Case#: {st.session_state.loaded_data.get('case_no')})"
                 )
             else:
                 st.session_state.loaded_data = None
+                st.session_state.retain_data = False
                 st.warning("No record found. You can create a new one.")
 
     existing_data = st.session_state.loaded_data
@@ -167,16 +176,19 @@ if menu == "Add / Update Patient":
     miasmatic_diag = st.text_input("Miasmatic Diagnosis", value=prefill("miasmatic_diag"))
     present_med = st.text_input("Present Medication", value=prefill("present_med"))
 
-    # ---------------- Follow-up Section ----------------
-    st.markdown("### 📋 New Follow-Up Entry")
-    followup_date = st.date_input("Follow-Up Date", value=pd.Timestamp.today())
-    description = st.text_area("Description (New Follow-Up)")
-    prescription = st.text_area("Prescription (New Follow-Up)")
-    status = st.text_input("Status (e.g., Improved / Same / Cured)")
-    medicine_days = st.number_input("Medicine Days", min_value=0)
+    # ---------------- Conditional Follow-up Section ----------------
+    if existing_data:
+        st.markdown("### 📋 New Follow-Up Entry")
+        followup_date = st.date_input("Follow-Up Date", value=pd.Timestamp.today())
+        description = st.text_area("Description (New Follow-Up)")
+        prescription = st.text_area("Prescription (New Follow-Up)")
+        status = st.text_input("Status (e.g., Improved / Same / Cured)")
+        medicine_days = st.number_input("Medicine Days", min_value=0)
+    else:
+        followup_date, description, prescription, status, medicine_days = None, "", "", "", 0
 
     # ---------------- Save Button ----------------
-    if st.button("Save / Update Record"):
+    if st.button("💾 Save / Update Record"):
         if case_no and name:
             data = {
                 "case_no": case_no,
@@ -219,34 +231,36 @@ if menu == "Add / Update Patient":
                 "present_med": present_med
             }
 
-            new_followup = {
-                "followup_date": str(followup_date),
-                "description": description,
-                "prescription": prescription,
-                "status": status,
-                "medicine_days": medicine_days
-            }
+            # Add follow-up only if existing record
+            if existing_data:
+                new_followup = {
+                    "followup_date": str(followup_date),
+                    "description": description,
+                    "prescription": prescription,
+                    "status": status,
+                    "medicine_days": medicine_days
+                }
 
-            doc_ref = patients_ref.document(case_no)
-            doc = doc_ref.get()
-            existing_followups = doc.to_dict().get("followups", []) if doc.exists else []
-            if any([description, prescription, status, medicine_days]):  # only add if new info entered
-                existing_followups.append(new_followup)
-            data["followups"] = existing_followups
+                doc_ref = patients_ref.document(case_no)
+                doc = doc_ref.get()
+                existing_followups = doc.to_dict().get("followups", []) if doc.exists else []
+                if any([description, prescription, status, medicine_days]):
+                    existing_followups.append(new_followup)
+                data["followups"] = existing_followups
 
-            doc_ref.set(data, merge=True)
-            st.success(f"Record saved successfully for Case#: {case_no}")
+            patients_ref.document(case_no).set(data, merge=True)
+            st.success(f"✅ Record saved successfully for Case#: {case_no}")
 
-            # Update session state with new data
-            st.session_state.loaded_data = data
+            st.session_state.retain_data = False
+            st.session_state.loaded_data = None
         else:
             st.error("Please enter both Case Number and Patient Name")
 
 
 
 # ---------- VIEW PATIENT RECORD ----------
-elif menu == "View Patient Record":
-    st.header("Retrieve Patient Record")
+elif menu == "🔍 View Patient Record":
+    st.header("🔍 Retrieve Patient Record")
 
     search_choice = st.radio("Search by:", ["Case Number", "Full Name"])
 
@@ -319,8 +333,9 @@ elif menu == "View Patient Record":
             st.error("Please enter a value to search.")
 
 
+
 # ---------- DELETE PATIENT RECORD ----------
-if menu == "Delete Patient":
+if menu == "🗑️ Delete Patient":
     st.header("🗑️ Delete Patient Record")
 
     delete_choice = st.radio("Delete by:", ["Case Number", "Full Name"])
