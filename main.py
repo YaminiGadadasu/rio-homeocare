@@ -32,20 +32,23 @@ patients_ref = db.collection("patients")
 # ---------- APP UI ----------
 st.title("Homeopathy Patient Database")
 
-menu = st.sidebar.radio("Navigation", ["Add / Update Patient", "View Patient Record"])
+menu = st.sidebar.selectbox("Menu", ["Add / Update Patient", "View Patient Record", "Delete Patient"])
+
 
 # ---------- ADD OR UPDATE PATIENT ----------
 if menu == "Add / Update Patient":
     st.header("Add / Update Patient Record")
 
-    import pandas as pd
+    # --- Reset loaded data when first entering screen ---
+    if "loaded_data" in st.session_state and not st.session_state.get("retain_data", False):
+        st.session_state.loaded_data = None
 
     # --- Keep form state persistent across reruns ---
     if "loaded_data" not in st.session_state:
         st.session_state.loaded_data = None
 
     # ---------------- Search Section ----------------
-    st.markdown("#### Search Existing Record")
+    st.markdown("Search Existing Record")
     search_choice = st.radio("Search by:", ["Case Number", "Full Name"])
     search_value = st.text_input("Enter value")
 
@@ -56,9 +59,11 @@ if menu == "Add / Update Patient":
             doc = patients_ref.document(search_value).get()
             if doc.exists:
                 st.session_state.loaded_data = doc.to_dict()
+                st.session_state.retain_data = True
                 st.success(f"Record found for Case#: {search_value}")
             else:
                 st.session_state.loaded_data = None
+                st.session_state.retain_data = False
                 st.warning("No record found. You can create a new one.")
         else:
             docs = list(patients_ref.where("name", "==", search_value).stream())
@@ -238,6 +243,7 @@ if menu == "Add / Update Patient":
             st.error("Please enter both Case Number and Patient Name")
 
 
+
 # ---------- VIEW PATIENT RECORD ----------
 elif menu == "View Patient Record":
     st.header("Retrieve Patient Record")
@@ -311,4 +317,36 @@ elif menu == "View Patient Record":
                 st.warning("No record found.")
         else:
             st.error("Please enter a value to search.")
+
+
+# ---------- DELETE PATIENT RECORD ----------
+if menu == "Delete Patient":
+    st.header("🗑️ Delete Patient Record")
+
+    delete_choice = st.radio("Delete by:", ["Case Number", "Full Name"])
+    delete_value = st.text_input("Enter value")
+
+    if st.button("Delete Record"):
+        if not delete_value:
+            st.error("Please enter a value.")
+        else:
+            # --- Delete by Case Number ---
+            if delete_choice == "Case Number":
+                doc_ref = patients_ref.document(delete_value)
+                doc = doc_ref.get()
+                if doc.exists:
+                    doc_ref.delete()
+                    st.success(f"Record deleted successfully for Case#: {delete_value}")
+                else:
+                    st.warning("No record found with that Case Number.")
+
+            # --- Delete by Full Name ---
+            else:
+                docs = list(patients_ref.where("name", "==", delete_value).stream())
+                if docs:
+                    for d in docs:
+                        d.reference.delete()
+                    st.success(f"Record(s) deleted successfully for patient: {delete_value}")
+                else:
+                    st.warning("No record found with that name.")
 
