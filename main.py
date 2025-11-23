@@ -1,15 +1,28 @@
 import streamlit as st
 import json
+import re
 
 # --- Simple Password Gate ---
 st.set_page_config(page_title="Homeopathy Patient Records")
 
 APP_PASSWORD = st.secrets.get("app_password")
+
+raw_key = st.secrets["firebase_key"]
+
+# Find the first { ... } JSON object even if Streamlit adds extra characters
+match = re.search(r"\{.*\}", raw_key, flags=re.DOTALL)
+if not match:
+    st.error("Could not locate valid JSON in firebase_key secret")
+    st.stop()
+
+clean_json = match.group(0)
+
+# Escape literal newlines inside the private key if necessary
+if "\\n" not in clean_json and "PRIVATE KEY" in clean_json:
+    clean_json = clean_json.replace("\n", "\\n")
+    
 try:
-    firebase_key_raw = st.secrets["firebase_key"].strip()
-    if "\\n" not in firebase_key_raw and "PRIVATE KEY" in firebase_key_raw:
-        firebase_key_raw = firebase_key_raw.replace("\n", "\\n")
-    firebase_key_json = json.loads(firebase_key_raw)
+    firebase_key_json = json.loads(clean_json)
 except Exception as e:
     st.error(f"Error loading Firebase key: {e}")
     st.stop()
