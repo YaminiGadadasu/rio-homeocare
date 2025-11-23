@@ -6,24 +6,8 @@ import re
 st.set_page_config(page_title="Homeopathy Patient Records")
 
 APP_PASSWORD = st.secrets.get("app_password")
+firebase_key_json = json.loads(st.secrets["firebase_key"]) 
 
-raw_key = st.secrets["firebase_key"].strip()
-
-# If it contains literal \n sequences like {\n "type": ...}, convert them to real newlines
-if raw_key.startswith("{\\n"):
-    raw_key = raw_key.replace("\\n", "\n")
-
-# Keep only valid JSON body between first { and last }
-raw_key = re.sub(r"^[^{]*", "", raw_key)
-raw_key = re.sub(r"[^}]*$", "", raw_key)
-
-try:
-    st.code(raw_key[:200])
-    firebase_key_json = json.loads(raw_key)
-except Exception as e:
-    st.error(f"Error loading Firebase key: {e}")
-    st.stop()
-st.sidebar.title("Secure Access")
 
 if APP_PASSWORD:
     user_pass = st.sidebar.text_input("Enter App Password", type="password")
