@@ -175,13 +175,74 @@ if menu == "Add / Update Patient":
 # ---------- VIEW PATIENT RECORD ----------
 elif menu == "View Patient Record":
     st.header("Retrieve Patient Record")
-    search_case = st.text_input("Enter Case Number")
+
+    search_choice = st.radio("Search by:", ["Case Number", "Full Name"])
+
+    if search_choice == "Case Number":
+        search_value = st.text_input("Enter Case Number")
+        query = patients_ref.where("case_no", "==", search_value) if search_value else None
+    else:
+        search_value = st.text_input("Enter Full Name")
+        query = patients_ref.where("name", "==", search_value) if search_value else None
+
     if st.button("Search"):
-        if search_case:
-            doc = patients_ref.document(search_case).get()
-            if doc.exists:
-                st.json(doc.to_dict())
-            else:
-                st.warning("No record found for this Case Number.")
+        if search_value:
+            results = query.stream() if query else []
+            found = False
+            for doc in results:
+                found = True
+                data = doc.to_dict()
+
+                # --- Display Patient Card ---
+                st.subheader(f"Patient: {data.get('name', 'N/A')} ({data.get('case_no', 'N/A')})")
+
+                with st.container():
+                    st.markdown("Personal Details")
+                    col1, col2 = st.columns(2)
+                    with col1:
+                        st.markdown(f"**Age:** {data.get('age', 'N/A')}")
+                        st.markdown(f"**Sex:** {data.get('sex', 'N/A')}")
+                        st.markdown(f"**Contact:** {data.get('contact_no', 'N/A')}")
+                        st.markdown(f"**Address:** {data.get('address', 'N/A')}")
+                    with col2:
+                        st.markdown(f"**Reg. Date:** {data.get('reg_date', 'N/A')}")
+                        st.markdown(f"**Marital Status:** {data.get('marital_status', 'N/A')}")
+                        st.markdown(f"**Occupation:** {data.get('occupation', 'N/A')}")
+
+                    st.divider()
+                    st.markdown("Medical History")
+                    st.markdown(f"**Diagnosis:** {data.get('diagnosis', '')}")
+                    st.markdown(f"**Complaints:** {data.get('presenting_complaints', '')}")
+                    st.markdown(f"**Investigation:** {data.get('investigation', '')}")
+                    st.markdown(f"**Family History:** {data.get('family_history', '')}")
+                    st.markdown(f"**Past Treatment:** {data.get('past_treatment', '')}")
+
+                    st.divider()
+                    st.markdown("Mind & Physicals")
+                    st.markdown(
+                        f"**Mind:** {data.get('mind', 'N/A')}  \n"
+                        f"**Appetite:** {data.get('appetite', '')}  \n"
+                        f"**Sleep:** {data.get('sleep', '')}  \n"
+                        f"**Thirst:** {data.get('thirst', '')}  \n"
+                        f"**Habits:** {data.get('habits', '')}"
+                    )
+
+                    st.divider()
+                    st.markdown("Follow-Ups")
+                    followups = data.get("followups", [])
+                    if followups:
+                        for idx, f in enumerate(followups, 1):
+                            st.markdown(f"**#{idx}** — {f.get('followup_date', '')}")
+                            st.markdown(f"**Status:** {f.get('status', '')}")
+                            st.markdown(f"**Prescription:** {f.get('prescription', '')}")
+                            st.markdown(f"**Description:** {f.get('description', '')}")
+                            st.markdown(f"**Medicine Days:** {f.get('medicine_days', '')}")
+                            st.markdown("---")
+                    else:
+                        st.info("No follow-up data recorded yet.")
+
+            if not found:
+                st.warning("No record found.")
         else:
-            st.error("Enter a Case Number first.")
+            st.error("Please enter a value to search.")
+
