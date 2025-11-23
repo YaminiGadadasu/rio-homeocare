@@ -5,8 +5,12 @@ import json
 st.set_page_config(page_title="Homeopathy Patient Records")
 
 APP_PASSWORD = st.secrets.get("app_password")
-firebase_key_json = json.loads(st.secrets["firebase_key"]) 
-
+try:
+    firebase_key_raw = st.secrets["firebase_key"]
+    firebase_key_json = json.loads(firebase_key_raw)
+except Exception as e:
+    st.error(f"Error loading Firebase key: {e}")
+    st.stop()
 st.sidebar.title("Secure Access")
 
 if APP_PASSWORD:
