@@ -156,9 +156,11 @@ if menu == "➕ Add / Update Patient":
     aversions = st.text_input("Aversions", value=prefill("aversions"))
     bowels = st.text_input("Bowels", value=prefill("bowels"))
     sweat = st.text_input("Sweat", value=prefill("sweat"))
+    side = st.text_input("Side", value=prefill("side"))
     urine = st.text_input("Urine", value=prefill("urine"))
     habits = st.text_input("Habits", value=prefill("habits"))
     sleep = st.text_input("Sleep", value=prefill("sleep"))
+    sun_headache = st.text_input("Sun Headache", value=prefill("sun_headache"))
     dreams = st.text_input("Dreams", value=prefill("dreams"))
     thirst = st.text_input("Thirst", value=prefill("thirst"))
     thermals = st.text_input("Thermals", value=prefill("thermals"))
@@ -179,6 +181,8 @@ if menu == "➕ Add / Update Patient":
     systemic_exam = st.text_area("Systemic Examination", value=prefill("systemic_exam"))
     miasmatic_diag = st.text_input("Miasmatic Diagnosis", value=prefill("miasmatic_diag"))
     present_med = st.text_input("Present Medication", value=prefill("present_med"))
+    present_med_days = st.text_input("Present Medicine Days", value=prefill("present_med_days"))
+    advised_suggestion = st.text_input("Advised Suggestion", value=prefill("advised_suggestion"))
 
     # ---------------- Conditional Follow-up Section ----------------
     if existing_data:
@@ -218,9 +222,11 @@ if menu == "➕ Add / Update Patient":
                 "aversions": aversions,
                 "bowels": bowels,
                 "sweat": sweat,
+                "side": side,
                 "urine": urine,
                 "habits": habits,
                 "sleep": sleep,
+                "sun_headache": sun_headache,
                 "dreams": dreams,
                 "thirst": thirst,
                 "thermals": thermals,
@@ -232,7 +238,9 @@ if menu == "➕ Add / Update Patient":
                 "temp": temp,
                 "systemic_exam": systemic_exam,
                 "miasmatic_diag": miasmatic_diag,
-                "present_med": present_med
+                "present_med": present_med,
+                "present_med_days": present_med_days,
+                "advised_suggestion": advised_suggestion
             }
 
             # Add follow-up only if existing record
@@ -310,11 +318,40 @@ elif menu == "🔍 View Patient Record":
                     st.divider()
                     st.markdown("Mind & Physicals")
                     st.markdown(
-                        f"**Mind:** {data.get('mind', 'N/A')}  \n"
+                        f"**Diabetes:** {data.get('diabetes', '')}  \n"
+                        f"**Hypertension:** {data.get('hypertension', '')}  \n"
+                        f"**Thyroid:** {data.get('thyroid', '')}  \n"
+                        f"**Hyper Lipidaemia:** {data.get('hyperlipidaemia', '')}  \n"
                         f"**Appetite:** {data.get('appetite', '')}  \n"
+                        f"**Bowels:** {data.get('bowels', '')}  \n"
+                        f"**Sweat:** {data.get('sweat', '')}  \n"
+                        f"**Urine:** {data.get('urine', '')}  \n"
                         f"**Sleep:** {data.get('sleep', '')}  \n"
+                        f"**Dreams:** {data.get('dreams', '')}  \n"
+                        f"**Thermals:** {data.get('thermals', '')}  \n"
+                        f"**Desires:** {data.get('desires', '')}  \n"
+                        f"**Aversions:** {data.get('aversions', '')}  \n"
+                        f"**Side:** {data.get('side', '')}  \n"
+                        f"**Habits:** {data.get('habits', '')}  \n"
+                        f"**Sun Headache:** {data.get('sun_headache', '')}  \n"
                         f"**Thirst:** {data.get('thirst', '')}  \n"
-                        f"**Habits:** {data.get('habits', '')}"
+                        f"**Intolerance:** {data.get('intolerance', '')}  \n"
+                        f"**Menstrual & Obstetric History:** {data.get('menstrual_history', '')}  \n"
+                        f"**Mind:** {data.get('mind', '')}"
+
+                    )
+
+                    st.divider()
+                    st.markdown("Examination & Medication")
+                    st.markdown(
+                        f"**B.P:** {data.get('bp', '')}  \n"
+                        f"**Weight:** {data.get('weight', '')}  \n"
+                        f"**Temp:** {data.get('temp', '')}  \n"
+                        f"**Systemic Examination:** {data.get('systemic_exam', '')}  \n"
+                        f"**Miasmatic Diagnosis:** {data.get('miasmatic_diag', '')}  \n"
+                        f"**Present Medication:** {data.get('present_med', '')}  \n"
+                        f"**Present Medicine Days:** {data.get('present_med_days', '')}  \n"
+                        f"**Advised Suggestion:** {data.get('advised_suggestion', '')}"
                     )
 
                     st.divider()
